@@ -1,0 +1,53 @@
+ОЦЕНКА ВЛИЯНИЯ ПЕРЕРЫВА МЕЖДУ ПОСТАМИ НА КОЛИЧЕСТВО ЛАЙКОВ
+
+select 
+	("Date" - lead("Date") over(order by id)) as Diff_Time,
+	("Likes" - lead("Likes") over(order by id)) as Diff_Likes,
+	(("Date" - lead("Date") over(order by id))::numeric 
+		/ 
+	("Likes" - lead("Likes") over(order by id))) as Ratio
+
+from public."Publications"
+
+order by Diff_Time desc
+
+
+
+ОЦЕНКА ВЛИЯНИЯ ДНЯ НЕДЕЛИ НА КОЛИЧЕСТВО ЛАЙКОВ
+
+select to_char("Date", 'Day') as day_of_week,
+	avg("Likes") filter(where to_char("Date", 'Day') = to_char("Date", 'Day')) as avg
+
+from public."Publications"
+
+group by to_char("Date", 'Day')
+ORDER BY avg desc
+
+
+ОЦЕНКА ВЛИЯНИЯ ВРЕМЕНИ ПУБЛИКАЦИИ НА КОЛИЧЕСТВО ЛАЙКОВ
+
+select 
+	(case
+		when extract(hour from "Time") < 4 then 'Ночь'
+		when extract(hour from "Time") < 8 then 'Раннее утро'
+		when extract(hour from "Time") < 12 then 'До полудня'
+		when extract(hour from "Time") < 16 then 'День'
+		when extract(hour from "Time") < 20 then 'Вечер'
+		when extract(hour from "Time") < 24 then 'Поздний вечер'
+	end) as time_category,
+	avg("Likes") as avg
+from public."Publications"
+group by time_category
+order by avg desc
+
+ВЫВОД
+По результатам 3-х запросов и полученным графикам (прилагаются) можно сделать следующий вывод:
+
+Важную роль в продвижении публикации играет день недели, в который публикация была сделана, а именно начало недели и конец - максимальные
+значения, середина недели - минимальное.
+
+Исследование показало, что чем раньше опубликована новость в течение дня, начиная с 00:00:00 и до 23:59:59, тем большее количество лайков
+она собирает.
+
+Минимальное влияние на количество лайков оказывает разница между постами, исследование определило, что зависимость лайков от перерывов
+между постами хаотичное.
